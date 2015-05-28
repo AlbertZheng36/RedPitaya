@@ -111,6 +111,7 @@ int get_gain(int *gain, const char *str)
 /** Acquire utility main */
 int main(int argc, char *argv[])
 {
+    printf("In main\n");
     g_argv0 = argv[0];
     int equal = 0;
     int shaping = 0;
@@ -247,6 +248,11 @@ int main(int argc, char *argv[])
         int i;
         int ret_val;
 
+        float mean_1,mean_2; 
+        float max_1,max_2;
+        float min_1,min_2;
+        float cal_fe=1.079/8191;
+
         int retries = 150000;
 
         s = (float **)malloc(SIGNALS_NUM * sizeof(float *));
@@ -261,10 +267,45 @@ int main(int argc, char *argv[])
                  * s[1][i] - Channel ADC1 raw signal
                  * s[2][i] - Channel ADC2 raw signal
                  */
+                mean_1 = 0;
+                mean_2 = 0;
+                min_1 = 10000;
+                max_1 = -10000;
+                min_2 = 10000;
+                max_2 = -10000;
 		
                 for(i = 0; i < MIN(size, sig_len); i++) {
                     printf("%7d %7d\n", (int)s[1][i], (int)s[2][i]);
+
+                    // Statistics    
+                    mean_1 += s[1][i];  
+                    mean_2 += s[2][i];    
+
+                    if (s[1][i] < min_1) {
+                        min_1 = s[1][i];
+                    }
+                    if (s[1][i] > max_1) {
+                        max_1 = s [1][i];
+                    }
+                    if (s[2][i] < min_2) {
+                        min_2 = s[2][i];
+                    }
+                    if (s[2][i] > max_2) {
+                        max_2 = s[2][i];
+                    }
                 }
+
+                // Normalization 
+                mean_1 /= (float)i; 
+                mean_2 /= (float)i; 
+
+                printf("Average: ");
+                printf("Ch1: %3.6f V , Ch2: %3.6f V  \n", mean_1 * cal_fe, mean_2 * cal_fe);
+                printf("Min: ");
+                printf("Ch1: %3.3f V , Ch2: %3.3f V  \n", min_1 * cal_fe, min_2 * cal_fe);
+                printf("Max: ");
+                printf("Ch1: %3.3f V , Ch2: %3.3f V  \n", max_1 * cal_fe, max_2 * cal_fe);
+
                 break;
             }
 
